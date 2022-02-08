@@ -1,6 +1,6 @@
 ---
 title: "Activity 6"
-author: "Name"
+author: "Josephat Oyondi"
 output: github_document
 ---
 
@@ -46,7 +46,7 @@ Now, why is `by_speaker` untidy data?
 How would this data be organized if it were tidy?
 Do not use any of your new `{tidyr}` skills yet, only describe it.
 
-**Response**: 
+**Response**: by_speaker is untidy because it is not structured and the values could not be accessible for data analysis and evaluation. The data can be made tidy by organizing it into columns and rows for faster reference to each character in each season.
 
 
 ![](README-img/noun_pause.png) **Planned Pause Point**: If you have any questions, contact your instructor. Otherwise feel free to continue on.
@@ -82,7 +82,13 @@ Remember that you can view the help documentation by using the `?` method in you
 2. Assign your reformatted dataset to `friends_tidy`, and 
 3. Name your code chunk either `pivot_contains` or `pivot_ends` depending on which helper function you used.
 
+```{r pivot_contains}
+pivot_season_longer <- pivot_longer(by_speaker, starts_with("Season"), names_to = "Season", values_to = "Words")
 
+friends_tidy <- pivot_season_longer
+
+friends_tidy
+```
 
 
 ### Save the dataset
@@ -94,6 +100,11 @@ We can do this by writing it to a file within our directory.
 2. Call the file that is being created "`friends_tidy.csv`".
 3. Name your code chunk `writing_file`
 
+```{r writing_file}
+write_csv(friends_tidy, here::here("data","friends_tidy.csv"))
+
+
+```
 
 
 
@@ -113,7 +124,12 @@ This is the same information that we were just worked with, but structured in a 
 2. Assign this data file into meaningful objects.
 3. Name this code chunk `read_season_file`.
 
+```{r read_season_file}
+by_season <- read_csv(here::here("data","by_season.csv"))
 
+by_season
+
+```
 
 
 Now, 
@@ -122,32 +138,102 @@ Now,
 2. Assign it to an object called `speaker_tidy`, and
 3. Name the code chunk `pivot_speaker`.
 
+```{r pivot_speaker}
+speaker_tidy <- pivot_longer(by_season, cols=`Chandler` : `Ross`, names_to="Character", values_to = "Words_spoken") #call all the columns with all speakers
 
+speaker_tidy
+
+```
 
 
 #### Challenge: Total words spoken
 
 If you were to use `by_season` and your skills from past activities, describe (or code) how you would obtain the total number of words spoken by each season and the total words spoken across the series (challenge, can you display this information in one table?).
 
-**Response**:
+**Response**: The code below can be used to show how to obtain total number of words spoken each season
+```{r response}
 
+
+word_per_s <- mutate(
+  by_season, 
+  word_per_season = `Chandler` + `Joey` + `Monica` + `Phoebe` + `Rachel` + `Ross`
+  
+  ) 
+
+
+
+word_per_s #word spoken per season
+
+#word spoken in the whole series
+word_count_series <- summarise(
+  word_per_s, 
+  total_spoken_series = sum(word_per_season)
+  )
+
+word_count_series
+
+#confirming the total number of words spoken in the series.
+#all_wod <- summarise(speaker_tidy, total_s_words = sum(`Words_spoken`))
+
+#all_wod
+```
 
 If you were to use `by_speaker` and your skills from past activities, describe (or code) how you would obtain the total number of words spoken by each season and the total words spoken across the series (challenge, can you display this information in one table?).
 
-**Response**:
+**Response**: The by_speaker dataset is unorganized and could not be directly used in retrieving the total number of words. Therefore, the first step was to organize the data as per friends_tidy, then summarise the data to determine the totals as shown in the next response code below. 
 
 
 If you were to use `friends_tidy` object and your skills from past activities, describe (or code) how you would obtain the total number of words spoken by each season and the total words spoken across the series (challenge, can you display this information in one table?).
 
-**Response**:
+**Response**:The code below shows the response for obtaining total words using friends_tidy
 
+```{r}
+
+wider_seasons <- friends_tidy %>%
+  pivot_wider(names_from = `Season`, values_from = Words)
+
+#finding the total number of words for each season and summarise the results in a table
+summary_words_per_ss <- summarise(wider_seasons,
+  Season_1_tot = sum(wider_seasons$`Season 1`),
+  Season_2_tot = sum(wider_seasons$`Season 2`),
+  Season_3_tot = sum(wider_seasons$`Season 3`),
+  Season_4_tot = sum(wider_seasons$`Season 4`),
+  Season_5_tot = sum(wider_seasons$`Season 5`),
+  Season_6_tot = sum(wider_seasons$`Season 6`),
+  Season_7_tot = sum(wider_seasons$`Season 7`),
+  Season_8_tot = sum(wider_seasons$`Season 8`),
+  Season_9_tot = sum(wider_seasons$`Season 9`),
+  Season_10_tot = sum(wider_seasons$`Season 10`),
+)
+
+summary_words_per_ss
+
+#finding the number of words for the whole series
+#calculate the total of all season totals
+
+word_count_series2 <- summarise(
+  summary_words_per_ss, 
+  total_spoken_series_2 = sum(
+    c(summary_words_per_ss$Season_1_tot, 
+      summary_words_per_ss$Season_2_tot,
+      summary_words_per_ss$Season_3_tot,
+      summary_words_per_ss$Season_4_tot,
+      summary_words_per_ss$Season_5_tot,
+      summary_words_per_ss$Season_6_tot,
+      summary_words_per_ss$Season_7_tot,
+      summary_words_per_ss$Season_8_tot,
+      summary_words_per_ss$Season_9_tot,
+      summary_words_per_ss$Season_10_tot))
+  )
+word_count_series2
+```
 
 How does the code for `friends_tidy` compare to the two `by_` code?
 Reflect on the process of writing this code and on the code itself.
 Which is easier to write?
 Which is easier to read?
 
-**Response**:
+**Response**: The `by_` code was easier to write and writer more than the `friends_tidy`. the friends_tidy dataset required first expanding the columns then finding the totals for each season and then the total word count for the whole series. The second process is tedious. 
 
 
 
@@ -175,7 +261,19 @@ friends_tidy %>%
 Write the code to take the tidy dataset and create one variable for each *speaker*.
 Call this code chunk `speaker_wide`.
 
+```{r}
 
+library(knitr)
+library(kableExtra)
+#writing code chunk to create variable for all speakers
+speaker_wide <- pivot_wider(speaker_tidy, names_from = Character, values_from = Words_spoken)
+
+speaker_wide
+knitr::kable(speaker_wide)
+kable(speaker_wide) %>%
+  kable_styling(latex_options = "striped", font_size = 14) %>% 
+  add_footnote("The Friends Series Characters by No. of Words spoken")
+```
 
 
 <img src="README-img/noun_pause.png" alt="pause" width = "20"/> <b>Planned Pause Point</b>: If you feel that you have a good understanding of these commands, feel free to start working on your project. The remainder of this activity will help to expand these commands.
